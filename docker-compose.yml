@@ -1,0 +1,45 @@
+version: "3"
+services:
+  rabbit-mq:
+    container_name: rabbit-mq
+    image: rabbitmq:3.10-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    networks:
+      - app-network
+  messaging-postgres:
+    container_name: messaging-postgres
+    image: postgres:11
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=users
+    networks:
+      - app-network
+  api:
+    container_name: users-api
+    build: ./userAPI
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    depends_on:
+      - rabbit-mq
+      - messaging-postgres
+    networks:
+      - app-network
+  email-api:
+    container_name: email-api
+    build: ./emailAPI
+    restart: unless-stopped
+    networks:
+      - app-network
+    depends_on:
+      - rabbit-mq
+networks:
+  app-network:
+    external:
+      name: messaging
+
